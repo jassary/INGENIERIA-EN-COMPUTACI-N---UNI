@@ -226,7 +226,7 @@ class ThermalApp(tk.Tk):
         """Lee los controles y devuelve (TA0, TB0, CA, CB) con C en J/K."""
         ca = SUBSTANCES[self.var_sub_a.get()][0]
         cb = SUBSTANCES[self.var_sub_b.get()][0]
-        ma = self.sc_mass_a.get() / 1000.0   # kg
+        ma = self.sc_mass_a.get() / 1000.0   
         mb = self.sc_mass_b.get() / 1000.0
         return self.sc_ta.get(), self.sc_tb.get(), ma * ca, mb * cb
 
@@ -239,13 +239,12 @@ class ThermalApp(tk.Tk):
     def recompute(self):
         """Se llama al mover cualquier control: recalcula todo y reinicia t."""
         self.TA0, self.TB0, CA, CB = self.params()
-        # Conservación de la energía: Q_perdido = Q_ganado
         self.Tf = (CA * self.TA0 + CB * self.TB0) / (CA + CB)
         self.tau = 1.0 / (K_COUPLING * (1.0 / CA + 1.0 / CB))
-        self.tmax = 5.0 * self.tau          # ~99.3 % del equilibrio
+        self.tmax = 5.0 * self.tau          
         self.t = 0.0
 
-        # Curvas completas
+       
         ts = np.linspace(0, self.tmax, 300)
         ya, yb = self.temps_at(ts)
         self.line_a.set_data(ts, ya)
@@ -340,7 +339,6 @@ class ThermalApp(tk.Tk):
                           font=(FONT, 15, "bold"))
             c.create_text(cx, ty, text=txt, fill=FG_MAIN, font=(FONT, 15, "bold"))
 
-            # Etiquetas bajo el vaso
             c.create_text(cx, bottom + 22, text=f"Sustancia {tag}",
                           fill=FG_MAIN, font=(FONT, 11, "bold"))
             c.create_text(cx, bottom + 40, text=f"{name} · {mass:.0f} g",
