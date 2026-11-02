@@ -1,28 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Simulador de equilibrio térmico (tkinter + matplotlib) - Tema oscuro.
-
-Dos sustancias A y B, con temperaturas y masas distintas, intercambian calor
-hasta alcanzar el equilibrio.
-
-Física utilizada
-----------------
-Conservación de la energía (Q_ganado = Q_perdido):
-    Tf = (mA*cA*TA + mB*cB*TB) / (mA*cA + mB*cB)
-
-Evolución temporal (ley de Newton entre dos cuerpos, acoplamiento K en W/K):
-    C = m * c                              (capacidad calorífica, J/K)
-    d(TA)/dt = -K (TA - TB) / CA
-    d(TB)/dt = +K (TA - TB) / CB
-    => TA(t) = Tf + (TA0 - Tf) * exp(-t/tau)
-       TB(t) = Tf + (TB0 - Tf) * exp(-t/tau)
-       tau   = 1 / (K * (1/CA + 1/CB))
-
-Requisitos: Python 3.9+ (probado en 3.13), numpy y matplotlib.
-    pip install matplotlib numpy
-Ejecutar:  python equilibrio_termico.py
-"""
 
 import tkinter as tk
 from tkinter import ttk
@@ -33,22 +8,19 @@ matplotlib.use("TkAgg")
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# --------------------------------------------------------------------------
-# 1. CONSTANTES DE DISEÑO Y DATOS FÍSICOS
-# --------------------------------------------------------------------------
-BG_MAIN = "#1e1e2f"      # fondo de la ventana
-BG_PANEL = "#2a2a40"     # paneles
-BG_CARD = "#3b3b58"      # tarjetas
-BORDER = "#4c4c70"       # bordes sutiles
+
+BG_MAIN = "#1e1e2f"      
+BG_PANEL = "#2a2a40"     
+BG_CARD = "#3b3b58"      
+BORDER = "#4c4c70"      
 FG_MAIN = "#ffffff"
 FG_DIM = "#a9acc9"
-COLOR_A = "#ff7a59"      # color de la curva A
-COLOR_B = "#4cc9f0"      # color de la curva B
-COLOR_EQ = "#ffd166"     # línea de equilibrio
+COLOR_A = "#ff7a59"      
+COLOR_B = "#4cc9f0"      
+COLOR_EQ = "#ffd166"    
 
 FONT = "Segoe UI"
 
-# nombre: (calor específico J/(kg·K), color del líquido)
 SUBSTANCES = {
     "Agua":     (4186, "#3a8dde"),
     "Cobre":    (385,  "#c8742f"),
@@ -60,11 +32,11 @@ SUBSTANCES = {
     "Aceite":   (2000, "#e0b341"),
 }
 
-K_COUPLING = 5.0        # W/K, conductancia de acople entre A y B
-MAX_MASS = 1000.0       # g  (vaso lleno)
-REAL_SECONDS = 12.0     # duración real de la animación completa
-FRAME_MS = 40           # ms entre fotogramas (~25 fps)
-EQ_TOL = 0.1            # °C: por debajo se considera equilibrio
+K_COUPLING = 5.0        
+MAX_MASS = 1000.0      
+REAL_SECONDS = 12.0     
+FRAME_MS = 40           
+EQ_TOL = 0.1            
 
 
 class ThermalApp(tk.Tk):
@@ -75,8 +47,8 @@ class ThermalApp(tk.Tk):
         self.geometry("1180x820")
         self.minsize(1000, 740)
 
-        # Estado de la simulación
-        self.t = 0.0            # tiempo simulado (s)
+        
+        self.t = 0.0            
         self.running = True
         self.tmax = 1.0
         self.tau = 1.0
@@ -84,12 +56,9 @@ class ThermalApp(tk.Tk):
 
         self._setup_styles()
         self._build_ui()
-        self.recompute()        # primer cálculo + dibujo
-        self._tick()            # arranca la animación
-
-    # ----------------------------------------------------------------------
-    # 2. ESTILOS ttk (Combobox, botones)
-    # ----------------------------------------------------------------------
+        self.recompute()        
+        self._tick()            
+    
     def _setup_styles(self):
         st = ttk.Style(self)
         st.theme_use("clam")
@@ -102,15 +71,13 @@ class ThermalApp(tk.Tk):
                fieldbackground=[("readonly", BG_CARD)],
                foreground=[("readonly", FG_MAIN)],
                background=[("active", BORDER)])
-        # Lista desplegable del combobox
+       
         self.option_add("*TCombobox*Listbox.background", BG_CARD)
         self.option_add("*TCombobox*Listbox.foreground", FG_MAIN)
         self.option_add("*TCombobox*Listbox.selectBackground", COLOR_B)
         self.option_add("*TCombobox*Listbox.selectForeground", "#101020")
 
-    # ----------------------------------------------------------------------
-    # 3. CONSTRUCCIÓN DE LA INTERFAZ
-    # ----------------------------------------------------------------------
+   
     def _panel(self, parent, **grid):
         """Contenedor con fondo de panel y borde sutil."""
         f = tk.Frame(parent, bg=BG_PANEL, highlightbackground=BORDER,
@@ -120,11 +87,11 @@ class ThermalApp(tk.Tk):
 
     def _build_ui(self):
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=5)   # panel superior
-        self.rowconfigure(1, weight=0)   # tarjetas
-        self.rowconfigure(2, weight=0)   # controles
+        self.rowconfigure(0, weight=5)   
+        self.rowconfigure(1, weight=0)   
+        self.rowconfigure(2, weight=0)   
 
-        # ---- 3.1 Panel superior: vasos | gráfica --------------------------
+       
         top = tk.Frame(self, bg=BG_MAIN)
         top.grid(row=0, column=0, sticky="nsew", padx=14, pady=(14, 8))
         top.columnconfigure(0, weight=4, uniform="top")
@@ -134,13 +101,13 @@ class ThermalApp(tk.Tk):
         left = self._panel(top, row=0, column=0, sticky="nsew", padx=(0, 7))
         right = self._panel(top, row=0, column=1, sticky="nsew", padx=(7, 0))
 
-        # Canvas con los vasos
+    
         self.canvas = tk.Canvas(left, bg=BG_PANEL, highlightthickness=0,
                                 width=440, height=360)
         self.canvas.pack(fill="both", expand=True, padx=6, pady=6)
         self.canvas.bind("<Configure>", lambda e: self.draw_beakers())
 
-        # Figura de matplotlib
+        
         self.fig = Figure(figsize=(6, 3.6), dpi=100, facecolor=BG_PANEL)
         self.ax = self.fig.add_subplot(111)
         self._style_axes()
@@ -161,7 +128,7 @@ class ThermalApp(tk.Tk):
         self.mpl_canvas.get_tk_widget().configure(bg=BG_PANEL, highlightthickness=0)
         self.mpl_canvas.get_tk_widget().pack(fill="both", expand=True, padx=6, pady=6)
 
-        # ---- 3.2 Tarjetas de métricas --------------------------------------
+        
         cards = tk.Frame(self, bg=BG_MAIN)
         cards.grid(row=1, column=0, sticky="ew", padx=14, pady=4)
         for i in range(3):
@@ -170,7 +137,7 @@ class ThermalApp(tk.Tk):
         self.card_dt = self._make_card(cards, 1, "DIFERENCIA ΔT")
         self.card_st = self._make_card(cards, 2, "TRANSCURRIDO / ESTADO")
 
-        # ---- 3.3 Panel de controles ----------------------------------------
+      
         ctrl = self._panel(self, row=2, column=0, sticky="ew", padx=14, pady=(8, 14))
         ctrl.columnconfigure(0, weight=1, uniform="c")
         ctrl.columnconfigure(1, weight=1, uniform="c")
@@ -180,7 +147,7 @@ class ThermalApp(tk.Tk):
         self.sc_ta = self._build_column(ctrl, 0, "SUSTANCIA A", COLOR_A, self.var_sub_a, 80.0, 400)
         self.sc_tb = self._build_column(ctrl, 1, "SUSTANCIA B", COLOR_B, self.var_sub_b, 25.0, 250)
 
-        # Botones de control de la animación
+       
         btns = tk.Frame(ctrl, bg=BG_PANEL)
         btns.grid(row=2, column=0, columnspan=2, pady=(2, 10))
         self.btn_pause = self._button(btns, "⏸  Pausa", self.toggle_run)
@@ -224,7 +191,7 @@ class ThermalApp(tk.Tk):
 
         temp = self._slider(box, 1, "Temperatura inicial (°C)", 0, 100, 0.1, t0, color)
         mass = self._slider(box, 2, "Masa (g)", 50, MAX_MASS, 10, m0, color)
-        # Guardamos las escalas en atributos según la columna
+       
         if col == 0:
             self.sc_mass_a = mass
         else:
@@ -254,9 +221,7 @@ class ThermalApp(tk.Tk):
         ax.set_title("Evolución de la temperatura", color=FG_MAIN, fontsize=11)
         ax.grid(True, color=FG_MAIN, alpha=0.12, lw=0.6)
 
-    # ----------------------------------------------------------------------
-    # 4. LÓGICA FÍSICA
-    # ----------------------------------------------------------------------
+    
     def params(self):
         """Lee los controles y devuelve (TA0, TB0, CA, CB) con C en J/K."""
         ca = SUBSTANCES[self.var_sub_a.get()][0]
@@ -300,16 +265,13 @@ class ThermalApp(tk.Tk):
         self.btn_pause.config(text="⏸  Pausa")
         self.refresh_dynamic()
 
-    # ----------------------------------------------------------------------
-    # 5. ACTUALIZACIÓN VISUAL
-    # ----------------------------------------------------------------------
+    
     def refresh_dynamic(self):
         """Actualiza todo lo que depende del tiempo actual."""
         ta, tb = self.temps_at(self.t)
         ta, tb = float(ta), float(tb)
         self.cur_a, self.cur_b = ta, tb
 
-        # Tarjetas
         self.card_tf["val"].config(text=f"{self.Tf:.1f} °C", fg=COLOR_EQ)
         self.card_tf["sub"].config(text="Q ganado = Q perdido")
         self.card_dt["val"].config(text=f"{abs(self.TA0 - self.TB0):.1f} °C")
@@ -323,7 +285,6 @@ class ThermalApp(tk.Tk):
             text="Equilibrio térmico alcanzado" if in_eq else
             ("En curso…" if self.running else "En pausa"))
 
-        # Gráfica: cursor y puntos
         self.cursor.set_xdata([self.t, self.t])
         self.dot_a.set_data([self.t], [ta])
         self.dot_b.set_data([self.t], [tb])
@@ -340,8 +301,8 @@ class ThermalApp(tk.Tk):
         W = max(c.winfo_width(), 300)
         H = max(c.winfo_height(), 260)
 
-        bw = min(W * 0.30, 150)           # ancho del vaso
-        top, bottom = H * 0.14, H * 0.82  # alto útil del vaso
+        bw = min(W * 0.30, 150)           
+        top, bottom = H * 0.14, H * 0.82  
         bh = bottom - top
 
         data = [
@@ -351,28 +312,27 @@ class ThermalApp(tk.Tk):
         for cx, tag, name, mass, temp in data:
             x0, x1 = cx - bw / 2, cx + bw / 2
             color = SUBSTANCES[name][1]
-            lvl = bh * (mass / MAX_MASS)          # altura proporcional a la masa
+            lvl = bh * (mass / MAX_MASS)          
             ytop = bottom - lvl
 
-            # Líquido
+            
             c.create_rectangle(x0 + 3, ytop, x1 - 3, bottom - 2, fill=color,
                                outline="")
-            # Superficie (elipse tenue)
+           
             c.create_line(x0 + 3, ytop, x1 - 3, ytop, fill="#ffffff", width=2)
 
-            # Vidrio: paredes + base + labio
             glass = "#c9cdea"
             c.create_line(x0, top, x0, bottom, x1 - 0, bottom, x1, top,
                           fill=glass, width=3, joinstyle="round")
             c.create_line(x0 - 8, top, x0 + 6, top, fill=glass, width=3)
             c.create_line(x1 - 6, top, x1 + 8, top, fill=glass, width=3)
-            # Graduaciones
+        
             for k in range(1, 5):
                 y = bottom - bh * k / 5
                 c.create_line(x0, y, x0 + (14 if k % 2 else 9), y,
                               fill=glass, width=1)
 
-            # Temperatura dentro del vaso (con sombra para legibilidad)
+            
             ty = min(bottom - lvl / 2, bottom - 20)
             ty = max(ty, top + 15)
             txt = f"{temp:.1f} °C"
@@ -386,16 +346,13 @@ class ThermalApp(tk.Tk):
             c.create_text(cx, bottom + 40, text=f"{name} · {mass:.0f} g",
                           fill=FG_DIM, font=(FONT, 9))
 
-        # Flecha de intercambio de calor entre los vasos
         mid = W / 2
         ay = top + bh * 0.45
         c.create_text(mid, ay - 14, text="calor", fill=FG_DIM, font=(FONT, 9, "italic"))
         c.create_line(mid - 24, ay, mid + 24, ay, fill=COLOR_EQ, width=2,
                       arrow="both", arrowshape=(10, 12, 4))
 
-    # ----------------------------------------------------------------------
-    # 6. ANIMACIÓN Y BOTONES
-    # ----------------------------------------------------------------------
+
     def _tick(self):
         """Avanza el tiempo simulado de forma que todo dure REAL_SECONDS."""
         if self.running and self.t < self.tmax:
